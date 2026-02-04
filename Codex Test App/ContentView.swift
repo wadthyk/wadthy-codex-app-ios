@@ -29,7 +29,7 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $tabSelection) {
-            sectionView(title: "Home", message: "This app was built entirely in Codex.", section: .home)
+            sectionView(title: "Home", message: "This app was built by Vongwadthy Khieu entirely in Codex.", section: .home)
                 .tabItem {
                     Label(AppSection.home.rawValue, systemImage: AppSection.home.systemImage)
                 }
@@ -183,7 +183,7 @@ struct QuickGameView: View {
 
     @State private var phase: GamePhase = .countdown
     @State private var countdownRemaining = 5
-    @State private var timeRemaining = 45.0
+    @State private var timeRemaining = 60.0
     @State private var questions: [Question] = []
     @State private var currentIndex = 0
     @State private var input = ""
@@ -332,7 +332,7 @@ struct QuickGameView: View {
         input = ""
         showError = false
         countdownRemaining = 5
-        timeRemaining = 45
+        timeRemaining = 60
         elapsedTime = 0
         phase = .countdown
         countdownStart = Date()
@@ -358,7 +358,7 @@ struct QuickGameView: View {
                 gameStart = now
             }
             let elapsed = now.timeIntervalSince(gameStart ?? now)
-            timeRemaining = max(0, 45 - elapsed)
+            timeRemaining = max(0, 60 - elapsed)
             if timeRemaining <= 0 {
                 finishGame()
             }
@@ -396,7 +396,7 @@ struct QuickGameView: View {
 
     private func finishGame() {
         if phase != .finished {
-            let elapsed = min(45, 45 - timeRemaining)
+            let elapsed = min(60, 60 - timeRemaining)
             elapsedTime = Int(elapsed.rounded())
             phase = .finished
         }
@@ -457,4 +457,17 @@ struct QuickGameView: View {
 
 #Preview {
     ContentView()
+}
+
+#Preview("AppIcon") {
+    VStack(spacing: 16) {
+        Image(uiImage: UIImage(named: "icon-1024") ?? UIImage())
+            .resizable()
+            .frame(width: 128, height: 128)
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .shadow(radius: 6)
+        Text("App Icon Preview")
+            .font(.headline)
+    }
+    .padding()
 }
