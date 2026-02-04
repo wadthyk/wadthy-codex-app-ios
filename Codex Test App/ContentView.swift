@@ -29,7 +29,7 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $tabSelection) {
-            sectionView(title: "Home", message: "Your dashboard lives here.", section: .home)
+            sectionView(title: "Home", message: "This app was built entirely in Codex.", section: .home)
                 .tabItem {
                     Label(AppSection.home.rawValue, systemImage: AppSection.home.systemImage)
                 }
@@ -183,14 +183,16 @@ struct QuickGameView: View {
 
     @State private var phase: GamePhase = .countdown
     @State private var countdownRemaining = 5
-    @State private var timeRemaining = 45
+    @State private var timeRemaining = 45.0
     @State private var questions: [Question] = []
     @State private var currentIndex = 0
     @State private var input = ""
     @State private var showError = false
     @State private var elapsedTime = 0
+    @State private var countdownStart: Date?
+    @State private var gameStart: Date?
 
-    private let countdownTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    private let countdownTimer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
     private static let keypadDigits = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
     private static let keypadColumns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 3)
 
@@ -226,7 +228,7 @@ struct QuickGameView: View {
             Spacer()
 
             if phase == .playing {
-                Text("\(timeRemaining)s")
+                Text(formatTime(timeRemaining))
                     .font(.headline)
                     .monospacedDigit()
             }
@@ -333,21 +335,31 @@ struct QuickGameView: View {
         timeRemaining = 45
         elapsedTime = 0
         phase = .countdown
+        countdownStart = Date()
+        gameStart = nil
     }
 
     private func handleTick() {
+        let now = Date()
         switch phase {
         case .countdown:
-            if countdownRemaining > 1 {
-                countdownRemaining -= 1
-            } else {
+            if countdownStart == nil {
+                countdownStart = now
+            }
+            let elapsed = now.timeIntervalSince(countdownStart ?? now)
+            let remaining = max(0, 5 - elapsed)
+            countdownRemaining = max(1, Int(ceil(remaining)))
+            if remaining <= 0 {
                 phase = .playing
+                gameStart = now
             }
         case .playing:
-            if timeRemaining > 0 {
-                timeRemaining -= 1
+            if gameStart == nil {
+                gameStart = now
             }
-            if timeRemaining == 0 {
+            let elapsed = now.timeIntervalSince(gameStart ?? now)
+            timeRemaining = max(0, 45 - elapsed)
+            if timeRemaining <= 0 {
                 finishGame()
             }
         case .finished:
@@ -384,13 +396,18 @@ struct QuickGameView: View {
 
     private func finishGame() {
         if phase != .finished {
-            if timeRemaining == 0 {
-                elapsedTime = 45
-            } else {
-                elapsedTime = 45 - timeRemaining
-            }
+            let elapsed = min(45, 45 - timeRemaining)
+            elapsedTime = Int(elapsed.rounded())
             phase = .finished
         }
+    }
+
+    private func formatTime(_ time: Double) -> String {
+        let totalSeconds = max(0, time)
+        let minutes = Int(totalSeconds) / 60
+        let seconds = Int(totalSeconds) % 60
+        let centiseconds = Int((totalSeconds - floor(totalSeconds)) * 100)
+        return String(format: "%02d:%02d.%02d", minutes, seconds, centiseconds)
     }
 
     private func generateQuestions(count: Int) -> [Question] {
