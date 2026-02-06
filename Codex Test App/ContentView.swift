@@ -24,7 +24,26 @@ struct ContentView: View {
         }
     }
 
-    @AppStorage("appAppearanceIsDark") private var appAppearanceIsDark = false
+    enum Appearance: String, CaseIterable, Identifiable {
+        case system = "System"
+        case light = "Light"
+        case dark = "Dark"
+
+        var id: String { rawValue }
+
+        var colorScheme: ColorScheme? {
+            switch self {
+            case .system:
+                return nil
+            case .light:
+                return .light
+            case .dark:
+                return .dark
+            }
+        }
+    }
+
+    @AppStorage("appAppearance") private var appAppearance = Appearance.system.rawValue
     @State private var tabSelection: AppSection = .home
 
     var body: some View {
@@ -47,7 +66,7 @@ struct ContentView: View {
                 }
                 .tag(AppSection.settings)
         }
-        .preferredColorScheme(appAppearanceIsDark ? .dark : .light)
+        .preferredColorScheme(Appearance(rawValue: appAppearance)?.colorScheme)
     }
 
     private func sectionView(title: String, message: String, section: AppSection) -> some View {
@@ -115,8 +134,12 @@ struct ContentView: View {
                     Text("Appearance")
                         .font(.headline)
 
-                    Toggle("Dark Mode", isOn: $appAppearanceIsDark)
-                        .toggleStyle(.switch)
+                    Picker("Appearance", selection: $appAppearance) {
+                        ForEach(Appearance.allCases) { option in
+                            Text(option.rawValue).tag(option.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(16)
